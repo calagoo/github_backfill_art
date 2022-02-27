@@ -1,7 +1,9 @@
-﻿import cv2
+﻿import os
+import cv2
+import git
 import numpy as np
 import datetime as dt
-import git
+from time import sleep
 
 def closest_value(value, values):
     # Convert the list to a numpy array to leverage numpy's capabilities
@@ -23,6 +25,8 @@ def color_value(value):
         return 20
 
 def commit(image):
+    repo = git.Repo('./.git')
+
     start_date = dt.datetime(2022, 1, 1)
     while start_date.weekday() != 6: # Week starts on Sunday
         start_date += dt.timedelta(days=1)
@@ -32,18 +36,24 @@ def commit(image):
 
     for col in range(52):
         for row in range(7):
-            print(f"Date: {date.strftime('%Y-%m-%d')}, Commits: {color_value(image[row][col])}")
+            # print(f"Date: {date.strftime('%Y-%m-%d')}, Commits: {color_value(image[row][col])}")
             commit_count = color_value(image[row][col])
             if commit_count > 0:
-                repo = git.Repo('')
-                # repo.git.add(A=True)
-                # repo.index.commit(f"Commit {ix} on {date.strftime('%Y-%m-%d')}")
-                repo.head.commit.authored_datetime = date
-                ix += 1  
+                for _ in range(commit_count):
+                    # Set environment variables for commit date manipulation
+                    os.environ['GIT_AUTHOR_DATE'] = date.strftime('%Y-%m-%dT%H:%M:%S')
+                    os.environ['GIT_COMMITTER_DATE'] = date.strftime('%Y-%m-%dT%H:%M:%S')
+
+                    repo.git.add(A=True)
+                    repo.index.commit(f"Commit {ix} on {date.strftime('%Y-%m-%d')}")
+
+                    sleep(0.01)
+                print(f"Date: {date.strftime('%Y-%m-%d')}, Commits: {commit_count}")
+                repo.git.push()
+                sleep(0.1)
 
             date += dt.timedelta(days=1)
             ix += 1
-    pass
 
 def image_proccessing():
     # Load the image
